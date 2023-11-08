@@ -45,7 +45,7 @@ class MangaImageProcessor:
             self.__Images.concatenateImages(output)
         else: #ocr
             print("Splitting images OCR...")
-            for image in tqdm(self.__Images.getImages()):
+            for image in tqdm(self.__Images.getImagesInfoList()):
                 self.__OCRController.splitImage(image, output)
 
         

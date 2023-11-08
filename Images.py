@@ -21,7 +21,7 @@ def extractNumbers(s):
 class Images:
     __entity = None
     
-    __imageList = [] # lista de las imágenes con su nombre
+    __imageInfoList = [] # lista de las imágenes con su nombre
     def __new__(cls, input_dir):
         if cls.__entity is None:
             cls.__entity = super(Images, cls).__new__(cls)
@@ -36,14 +36,14 @@ class Images:
         for fileName in tqdm(nameList): # Recorre los archivos de la carpeta de entrada
             if fileName.endswith(".jpg") or fileName.endswith(".png"):
                 imagen = cv2.imread(os.path.join(input_dir, fileName), cv2.IMREAD_UNCHANGED)
-                self.__imageList.append([imagen, extractLetters(os.path.splitext(fileName)[0])])
+                self.__imageInfoList.append([imagen, extractLetters(os.path.splitext(fileName)[0])])
         
     def splitImages(self, output_dir):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
         numImagen = 1
-        for imageInfo in self.__imageList:
+        for imageInfo in self.__imageInfoList:
             image, imageName = imageInfo
             height, width, _ = image.shape
             
@@ -60,8 +60,8 @@ class Images:
                 
                 numImagen += 1
 
-    def getImages(self):
-        return self.__imageList
+    def getImagesInfoList(self):
+        return self.__imageInfoList
     
     def concatenateImages(self, output_dir):
         if not os.path.exists(output_dir):
@@ -71,11 +71,14 @@ class Images:
         num = 1
         
         pos1 = 0
-        for pos2 in tqdm(range(len(self.__imageList))):
-            image, imageName = self.__imageList[pos2]
+
+        imageList = [subList[0] for subList in self.__imageInfoList]
+
+        for pos2 in tqdm(range(len(imageList))):
+            image, imageName = self.__imageInfoList[pos2]
             heightImage = image.shape[0]
             if(heightSum + heightImage > 60000):
-                concatImage = cv2.vconcat(self.__imageList[pos1:pos2+1])
+                concatImage = cv2.vconcat(imageList[pos1:pos2+1])
                 
                 cv2.imwrite(os.path.join(output_dir, imageName + f"_{num}.jpg"), concatImage)
                 
@@ -86,5 +89,5 @@ class Images:
                 heightSum += heightImage
         
         if(heightSum != 0):
-            concatImage = cv2.vconcat(self.__imageList[pos1:])
+            concatImage = cv2.vconcat(imageList[pos1:])
             cv2.imwrite(os.path.join(output_dir, imageName + f"_{num}.jpg"), concatImage)
