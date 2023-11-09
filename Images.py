@@ -29,65 +29,89 @@ class Images:
         return cls.__entity
 
     def __initialize(self, input_dir):
-        print("\nLoading images...")
-
         nameList = os.listdir(input_dir)
         nameList.sort(key=extractNumbers)
-        for fileName in tqdm(nameList): # Recorre los archivos de la carpeta de entrada
+
+        namesDict = {}
+
+        for fileName in tqdm(nameList, desc= "Loading images"): # Recorre los archivos de la carpeta de entrada
             if fileName.endswith(".jpg") or fileName.endswith(".png"):
-                imagen = cv2.imread(os.path.join(input_dir, fileName), cv2.IMREAD_UNCHANGED)
-                self.__imageInfoList.append([imagen, extractLetters(os.path.splitext(fileName)[0])])
+                img = cv2.imread(os.path.join(input_dir, fileName), cv2.IMREAD_UNCHANGED)
+                completeImageName = os.path.splitext(fileName)[0]
+                imageName = extractLetters(completeImageName)
+
+                if imageName in namesDict: # si ya existe la clave en el diccionario
+                    imageName += str(extractNumbers(namesDict[imageName]) + 1) # cambia el nombre de la imagen
+                else:
+                    namesDict[imageName] = completeImageName # agrega la clave al diccionario
+                
+                self.__imageInfoList.append([img, imageName])
         
     def splitImages(self, output_dir):
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+            """
+            Splits the images vertically in the list and saves them to the designated output directory.
 
-        numImagen = 1
-        for imageInfo in self.__imageInfoList:
-            image, imageName = imageInfo
-            height, width, _ = image.shape
-            
-            for y1 in tqdm(range(0, height, width)):
-                y2 = y1 + width
-                if y2 > height:
-                    y2 = height
+            Args:
+                output_dir (str): The directory where the split images will be saved.
+
+            Returns:
+                None
+            """
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+
+            numImagen = 1
+            for imageInfo in self.__imageInfoList:
+                image, imageName = imageInfo
+                height, width, _ = image.shape
+                
+                for y1 in tqdm(range(0, height, width), desc = f"Splitting {imageName}"):
+                    y2 = y1 + width
+                    if y2 > height:
+                        y2 = height
+                        
+                    splitImage = image[y1:y2, 0:width]
+                    nombreImagen_salida = imageName + f"_{numImagen}.jpg"
                     
-                splitImage = image[y1:y2, 0:width]
-                nombreImagen_salida = imageName + f"_{numImagen}.jpg"
-                
-                dir_salida = os.path.join(output_dir, nombreImagen_salida)
-                cv2.imwrite(dir_salida, splitImage)
-                
-                numImagen += 1
+                    dir_salida = os.path.join(output_dir, nombreImagen_salida)
+                    cv2.imwrite(dir_salida, splitImage)
+                    
+                    numImagen += 1
 
     def getImagesInfoList(self):
         return self.__imageInfoList
     
     def concatenateImages(self, output_dir):
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+            """
+            Concatenates images vertically and saves them as separate files in the specified output directory.
+            
+            Args:
+                output_dir (str): The directory where the concatenated images will be saved.
+            """
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
 
-        heightSum = 0
-        num = 1
-        
-        pos1 = 0
+            heightSum = 0
+            num = 1
+            
+            pos1 = 0
 
-        imageList = [subList[0] for subList in self.__imageInfoList]
+            imageList = [subList[0] for subList in self.__imageInfoList]
 
-        for pos2 in tqdm(range(len(imageList))):
-            image, imageName = self.__imageInfoList[pos2]
-            heightImage = image.shape[0]
-            if(heightSum + heightImage > 60000):
-                concatImage = cv2.vconcat(imageList[pos1:pos2+1])
-                
+            for pos2 in tqdm(range(len(imageList)), desc="Concatenating images"):
+                image, imageName = self.__imageInfoList[pos2]
+                heightImage = image.shape[0]
+                if(heightSum + heightImage > 60000):
+                    concatImage = cv2.vconcat(imageList[pos1:pos2+1])
+                    
+                    cv2.imwrite(os.path.join(output_dir, imageName + f"_{num}.jpg"), concatImage)
+                    
+                    pos1 = pos2 + 1
+                    heightSum = 0
+                    num += 1
+                else:
+                    heightSum += heightImage
+            
+            if(heightSum != 0):
+                concatImage = cv2.vconcat(imageList[pos1:])
                 cv2.imwrite(os.path.join(output_dir, imageName + f"_{num}.jpg"), concatImage)
-                
-                pos1 = pos2 + 1
-                heightSum = 0
-                num += 1
-            else:
-                heightSum += heightImage
-        
-        if(heightSum != 0):
-            concatImage = cv2.vconcat(imageList[pos1:])
-            cv2.imwrite(os.path.join(output_dir, imageName + f"_{num}.jpg"), concatImage)

@@ -33,20 +33,28 @@ class MangaImageProcessor:
         self.__OCRController = OCRController(self.__args.detect_lang)
 
     def process(self):
+        """
+        Processes the images based on the mode specified in the command line arguments.
+
+        If the mode is 's', the images are split into individual pages and saved in the output directory.
+        If the mode is 'c', the images are concatenated into a single image and saved in the output directory.
+        If the mode is 'ocr', each image is split into individual pages and processed using OCR. The resulting text
+        files are saved in the output directory.
+
+        Returns:
+            None
+        """
         output = self.__args.output
         mode = self.__args.mode
 
         print("\n")
         if mode == 's':
-            print("Splitting images...")
             self.__Images.splitImages(output)
         elif mode == 'c':
-            print("Concatenating images...")
             self.__Images.concatenateImages(output)
         else: #ocr
-            print("Splitting images OCR...")
-            for image in tqdm(self.__Images.getImagesInfoList()):
-                self.__OCRController.splitImage(image, output)
+            for img in tqdm(self.__Images.getImagesInfoList(), desc = "Splitting images OCR"):
+                self.__OCRController.splitImage(img, output)
 
         
 

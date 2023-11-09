@@ -9,7 +9,7 @@ class OCRController:
     __entity = None
     
     __reader = None
-    __data = None
+    __data = []
 
     __device = None
     def __new__(cls, detectLanguage):
@@ -43,20 +43,21 @@ class OCRController:
             Returns:
                 list: The cleaned OCR data.
             """
+            
             if len(data) == 2 and type(list[-1]) is str: # 1 sublista con las coordenadas y 1 con el texto
-                return data
+                return [data]
             
             cleanList = []
             for d in data:
                 if not d: # si la sublista está vacia
                     continue
-                if len(data) == 2 and type(data[-1]) is str:
+                if len(d) == 2 and type(d[-1]) is str:
                     cleanList.append(d)
                     continue
 
                 subLista = self.__cleanData(d)
                 if subLista:
-                    cleanList.append(subLista)
+                    cleanList += subLista
             
             return cleanList
 
@@ -121,18 +122,19 @@ class OCRController:
             return self.__mergeBoxes(mergedList) # se llama recursivamente hasta que no haya fuciones
         return mergedList
 
-    def __createMissingBoxes(self, boxList, width, height):
+    def __createMissingBoxes(self, boxList, img):
             """
             Creates missing bounding boxes in a list of bounding boxes.
 
             Args:
                 boxList (list): List of bounding boxes.
-                width (int): Width of the image.
-                height (int): Height of the image.
+                img (numpy array): The image from which the bounding boxes were extracted.
 
             Returns:
                 list: List of bounding boxes with missing boxes added.
             """
+            height, width, _ = img.shape
+
             newList = []
             y = 0 # Y de la caja anterior
             for b in boxList:
@@ -148,17 +150,54 @@ class OCRController:
             
             return newList
 
-    def __process(self, imagen):
-        """
-        Process the given image using the easyocr library and store the result in the __data attribute.
+    def __verifyData(self, data, img):
+        height, width, _ = img.shape
 
-        Args:
-            imagen: The image to be processed.
+        # ajusta los puntos de las cajas
+        newDataList = []
+        for d in data:
+            addData = True
+            for i in range(len(d[0])):
+                if d[0][i][1] > height or d[0][i][0] > width or d[0][i][1] < 0 or d[0][i][0] < 0:
+                    addData = False
+                    break
+            
+            if not addData or d[0][0][0] == d[0][1][0] or d[0][0][1] == d[0][3][1]:
+                continue
+            newDataList.append(d)
+        
+        return newDataList
 
-        Returns:
-            None
-        """
-        self.__data = self.__reader.readtext(image=imagen, detail=1, paragraph=True)
+    def __process(self, img):
+            """
+            Processes the given image using OCR to extract text data from it.
+
+            Args:
+                img: A numpy array representing the image to be processed.
+
+            Returns:
+                None
+            """
+            height, width, _ = img.shape
+            maxHeigth = 5000
+            
+            if height > maxHeigth:
+                for y1 in tqdm(range(0, height, int(maxHeigth * 0.8)), desc = "Processing split image with OCR "):
+                    y2 = y1 + maxHeigth
+                    if y2 > height:
+                        y2 = height
+
+                    splitImage = img[y1:y2, 0:width]
+                    newData = self.__cleanData(self.__reader.readtext(splitImage, detail=1, paragraph=True))
+
+                    for d in newData:
+                        for i in range(len(d[0])): # recorre los puntos de la caja
+                            d[0][i][1] += y1 # ajusta el eje y
+                    self.__data += self.__mergeBoxes(newData)
+            else:
+                self.__data = self.__cleanData(self.__reader.readtext(img, detail=1, paragraph=True))
+            self.__data = self.__verifyData(self.__mergeBoxes(self.__data), img)
+            self.__data.sort(key=lambda y: y[0][0][1]) # ordena las cajas por el eje 'Y' del primer punto
     
     def splitImage(self, imageInfo, output_dir):
             """
@@ -172,20 +211,14 @@ class OCRController:
             Returns:
                 None
             """
-            image, imageName = imageInfo
-            self.__process(image)
-
-            boxList = self.__mergeBoxes(self.__cleanData(self.__data))
+            img, imageName = imageInfo
+            self.__process(img)
             
-            height, width, _ = image.shape
-            boxList = self.__createMissingBoxes(boxList, width, height)
-            
-            boxList.sort(key=lambda y: y[0][0][1]) # ordena las cajas por el eje y del primer punto
-            for i in tqdm(range(len(boxList))):
+            width = img.shape[1]
+            boxList = self.__createMissingBoxes(self.__data, img)
+            for i in tqdm(range(len(boxList)), desc = f"Saving image: {imageName}"):
                 box = boxList[i]
-                splitImage = image[box[0][0][1]:box[0][2][1], 0:width]
+                splitImage = img[box[0][0][1]:box[0][2][1], 0:width]
 
                 imageName_output = imageName + f"_{i}.jpg"
-                
-                dir_salida = os.path.join(output_dir, imageName_output)
-                cv2.imwrite(dir_salida, splitImage)
+                cv2.imwrite(os.path.join(output_dir, imageName_output), splitImage)
