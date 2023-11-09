@@ -199,7 +199,7 @@ class OCRController:
             self.__data = self.__verifyData(self.__mergeBoxes(self.__data), img)
             self.__data.sort(key=lambda y: y[0][0][1]) # ordena las cajas por el eje 'Y' del primer punto
     
-    def splitImage(self, imageInfo, output_dir):
+    def splitImage(self, imagesInfo, output_dir):
             """
             Splits the input image into multiple sub-images based on the detected text boxes.
             Saves each sub-image as a separate file in the specified output directory.
@@ -211,14 +211,17 @@ class OCRController:
             Returns:
                 None
             """
-            img, imageName = imageInfo
-            self.__process(img)
-            
-            width = img.shape[1]
-            boxList = self.__createMissingBoxes(self.__data, img)
-            for i in tqdm(range(len(boxList)), desc = f"Saving image: {imageName}"):
-                box = boxList[i]
-                splitImage = img[box[0][0][1]:box[0][2][1], 0:width]
+            numImagen = 1
+            for imgInf in tqdm(imagesInfo, desc = "Processing images with OCR"):
+                img, imageName = imgInf
+                self.__process(img)
+                
+                width = img.shape[1]
+                boxList = self.__createMissingBoxes(self.__data, img)
+                for i in tqdm(range(len(boxList)), desc = f"Saving image: {imageName}"):
+                    box = boxList[i]
+                    splitImage = img[box[0][0][1]:box[0][2][1], 0:width]
 
-                imageName_output = imageName + f"_{i}.jpg"
-                cv2.imwrite(os.path.join(output_dir, imageName_output), splitImage)
+                    imageName_output = imageName + f"_{numImagen}.jpg"
+                    cv2.imwrite(os.path.join(output_dir, imageName_output), splitImage)
+                    numImagen += 1

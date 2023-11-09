@@ -32,19 +32,12 @@ class Images:
         nameList = os.listdir(input_dir)
         nameList.sort(key=extractNumbers)
 
-        namesDict = {}
-
         for fileName in tqdm(nameList, desc= "Loading images"): # Recorre los archivos de la carpeta de entrada
             if fileName.endswith(".jpg") or fileName.endswith(".png"):
                 img = cv2.imread(os.path.join(input_dir, fileName), cv2.IMREAD_UNCHANGED)
                 completeImageName = os.path.splitext(fileName)[0]
                 imageName = extractLetters(completeImageName)
 
-                if imageName in namesDict: # si ya existe la clave en el diccionario
-                    imageName += str(extractNumbers(namesDict[imageName]) + 1) # cambia el nombre de la imagen
-                else:
-                    namesDict[imageName] = completeImageName # agrega la clave al diccionario
-                
                 self.__imageInfoList.append([img, imageName])
         
     def splitImages(self, output_dir):

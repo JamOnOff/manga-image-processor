@@ -53,8 +53,7 @@ class MangaImageProcessor:
         elif mode == 'c':
             self.__Images.concatenateImages(output)
         else: #ocr
-            for img in tqdm(self.__Images.getImagesInfoList(), desc = "Splitting images OCR"):
-                self.__OCRController.splitImage(img, output)
+            self.__OCRController.splitImage(self.__Images.getImagesInfoList(), output)
 
         
 
