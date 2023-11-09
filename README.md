@@ -1,8 +1,8 @@
 # Manga Image Processor
 
-Program to process manga images by cutting or concatenating them.
+Program for manga image processing by splitting or concatenating. 
 
-
+The main function is optical character recognition ([OCR](jaided.ai/easyocr/)) division with layers to crop images up to 60,000 pixels tall while preserving the text separately in the images.
 
 ````
 -h, --help                                        Print help information
