@@ -179,11 +179,11 @@ class OCRController:
                 None
             """
             height, width, _ = img.shape
-            maxHeigth = 5000
+            maxHeight = 5000
             
-            if height > maxHeigth:
-                for y1 in tqdm(range(0, height, int(maxHeigth * 0.8)), desc = "Processing split image with OCR "):
-                    y2 = y1 + maxHeigth
+            if height > maxHeight:
+                for y1 in tqdm(range(0, height, int(maxHeight * 0.8)), desc = "Processing split image with OCR "):
+                    y2 = y1 + maxHeight
                     if y2 > height:
                         y2 = height
 
