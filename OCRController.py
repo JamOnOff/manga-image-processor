@@ -25,12 +25,12 @@ class OCRController:
             self.__device = 'cuda'
         else:
             self.__device = 'cpu'
-        
+
         # Inicializa EasyOCR con el dispositivo apropiado
-        if type(detectLanguage) is list:
-            self.__reader = easyocr.Reader(detectLanguage, model_storage_directory=None, gpu=self.__device)
+        if isinstance(detectLanguage, list):
+            self.__reader = easyocr.Reader([L.lower() for L in detectLanguage], model_storage_directory=None, gpu=self.__device)
         else:
-            self.__reader = easyocr.Reader([detectLanguage], model_storage_directory=None, gpu=self.__device)
+            self.__reader = easyocr.Reader([detectLanguage.lower()], model_storage_directory=None, gpu=self.__device)
 
     def __cleanData(self, data):
             """
