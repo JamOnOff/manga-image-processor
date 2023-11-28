@@ -1,6 +1,5 @@
 import argparse
 
-from tqdm import tqdm
 from Images import Images
 from OCRController import OCRController
 
@@ -23,8 +22,9 @@ class MangaImageProcessor:
         #entradas y salidas basicas
         self.__parser.add_argument('-i', '--input', dest='input', help='Input path', required=True)
         self.__parser.add_argument('-o', '--output', dest='output', help='Output path', required=True)
+        self.__parser.add_argument('-o2', '--output2', dest='output2', help='Optional output path, functional only in OCR mode. Address where non-text images will be saved.', required=False)
         #modo - split - concatenate
-        self.__parser.add_argument('-m', '--mode', choices=['s', 'c', 'ocr'], default='s', help="Processing mode: 'split', 'concatenate' o 'split-with-ocr'")
+        self.__parser.add_argument('-m', '--mode', choices=['s', 'c', 'ocr'], default='s', help="Processing mode: 'split' (default), 'concatenate' o 'split-with-ocr'")
         self.__parser.add_argument('-l', '--detect-lang', nargs='+', default='ko', help="Language to detect, default = Korean")
 
         self.__args = self.__parser.parse_args()
@@ -53,7 +53,11 @@ class MangaImageProcessor:
         elif mode == 'c':
             self.__Images.concatenateImages(output)
         else: #ocr
-            self.__OCRController.splitImage(self.__Images.getImagesInfoList(), output)
+            output2 = self.__args.output2
+            if not output2: # si no se especifica output2, se usa solo output
+                self.__OCRController.splitImage(self.__Images.getImagesInfoList(), output)
+            else:
+                self.__OCRController.splitImage(self.__Images.getImagesInfoList(), output, self.__args.output2)
 
         
 

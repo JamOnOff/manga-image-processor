@@ -63,17 +63,16 @@ class OCRController:
 
     def __detectCollisionY_aux(self, list1 , list2):
             dist = 10
-            p1 = list1[0]
-            p2 = list1[1]
-            p3 = list1[2]
+            p0 = list1[0]
+            p2 = list1[2]
             
-            if p1[1] - dist < list2[0][1] and list2[0][1] < p3[1] + dist:
+            if p0[1] - dist < list2[0][1] and list2[0][1] < p2[1] + dist:
                 return True
-            if p1[1] - dist < list2[1][1] and list2[1][1] < p3[1] + dist:
+            if p0[1] - dist < list2[1][1] and list2[1][1] < p2[1] + dist:
                 return True
-            if p1[1] - dist < list2[2][1] and list2[2][1] < p3[1] + dist:
+            if p0[1] - dist < list2[2][1] and list2[2][1] < p2[1] + dist:
                 return True
-            if p1[1] - dist < list2[3][1] and list2[3][1] < p3[1] + dist:
+            if p0[1] - dist < list2[3][1] and list2[3][1] < p2[1] + dist:
                 return True
             
             return False
@@ -199,7 +198,7 @@ class OCRController:
             self.__data = self.__verifyData(self.__mergeBoxes(self.__data), img)
             self.__data.sort(key=lambda y: y[0][0][1]) # ordena las cajas por el eje 'Y' del primer punto
     
-    def splitImage(self, imagesInfo, output_dir):
+    def splitImage(self, imagesInfo, output_dir, output_dir2 = None):
             """
             Splits the input image into multiple sub-images based on the detected text boxes.
             Saves each sub-image as a separate file in the specified output directory.
@@ -207,6 +206,7 @@ class OCRController:
             Args:
                 imageInfo: A tuple containing the input image and its name.
                 output_dir: The directory where the sub-images will be saved.
+                output_dir2: The directory where the sub-images without text will be saved.
 
             Returns:
                 None
@@ -222,6 +222,10 @@ class OCRController:
                     box = boxList[i]
                     splitImage = img[box[0][0][1]:box[0][2][1], 0:width]
 
+                    dir = output_dir
+                    if output_dir2 and not box[1]:
+                        dir = output_dir2
+
                     imageName_output = imageName + f"_{numImagen}.jpg"
-                    cv2.imwrite(os.path.join(output_dir, imageName_output), splitImage)
+                    cv2.imwrite(os.path.join(dir, imageName_output), splitImage)
                     numImagen += 1
