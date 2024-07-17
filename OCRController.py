@@ -11,7 +11,6 @@ class OCRController:
     __reader = None
     __data = []
 
-    __device = None
     def __new__(cls, detectLanguage):
         if cls.__entity is None:
             cls.__entity = super(OCRController, cls).__new__(cls)
@@ -28,9 +27,9 @@ class OCRController:
 
         # Inicializa EasyOCR con el dispositivo apropiado
         if isinstance(detectLanguage, list):
-            self.__reader = easyocr.Reader([L.lower() for L in detectLanguage], model_storage_directory=None, gpu=self.__device)
+            self.__reader = easyocr.Reader([L.lower() for L in detectLanguage], model_storage_directory="models", gpu=self.__device)
         else:
-            self.__reader = easyocr.Reader([detectLanguage.lower()], model_storage_directory=None, gpu=self.__device)
+            self.__reader = easyocr.Reader([detectLanguage.lower()], model_storage_directory="models", gpu=self.__device)
 
     def __cleanData(self, data):
             """
@@ -178,7 +177,7 @@ class OCRController:
                 None
             """
             height, width, _ = img.shape
-            maxHeight = 5000
+            maxHeight = 2560
             
             if height > maxHeight:
                 for y1 in tqdm(range(0, height, int(maxHeight * 0.8)), desc = "Processing split image with OCR "):
@@ -187,14 +186,14 @@ class OCRController:
                         y2 = height
 
                     splitImage = img[y1:y2, 0:width]
-                    newData = self.__cleanData(self.__reader.readtext(splitImage, detail=1, paragraph=True))
+                    newData = self.__cleanData(self.__reader.readtext(splitImage, paragraph=True, batch_size=5))
 
                     for d in newData:
                         for i in range(len(d[0])): # recorre los puntos de la caja
                             d[0][i][1] += y1 # ajusta el eje y
                     self.__data += self.__mergeBoxes(newData)
             else:
-                self.__data = self.__cleanData(self.__reader.readtext(img, detail=1, paragraph=True))
+                self.__data = self.__cleanData(self.__reader.readtext(img, paragraph=True, batch_size=5))
             self.__data = self.__verifyData(self.__mergeBoxes(self.__data), img)
             self.__data.sort(key=lambda y: y[0][0][1]) # ordena las cajas por el eje 'Y' del primer punto
     

@@ -25,7 +25,7 @@ class MangaImageProcessor:
         self.__parser.add_argument('-o2', '--output2', dest='output2', help='Optional output path, functional only in OCR mode. Address where non-text images will be saved.', required=False)
         #modo - split - concatenate
         self.__parser.add_argument('-m', '--mode', choices=['s', 'c', 'ocr'], default='s', help="Processing mode: 'split' (default), 'concatenate' o 'split-with-ocr'")
-        self.__parser.add_argument('-l', '--detect-lang', nargs='+', default='ko', help="Language to detect, default = Korean")
+        self.__parser.add_argument('-l', '--detect-lang', nargs='+', default='en', help="Language to detect, default = English")
 
         self.__args = self.__parser.parse_args()
 

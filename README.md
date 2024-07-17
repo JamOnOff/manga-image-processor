@@ -14,7 +14,7 @@ The main function is optical character recognition ([OCR](jaided.ai/easyocr/)) d
                                                       concatenate (c): Vertically concatenate images. If the height limit of a single image is exceeded, several images will be created.
                                                       split-with-ocr (ocr): The software detects the text within the image and separates it vertically into individual images without causing any harm to the text.
 
--l, --detect-lang { jaided.ai/easyocr/ }          Language to detect, default = Korean
+-l, --detect-lang { jaided.ai/easyocr/ }          Language to detect (ko, en, es, ...), default = English (en)
 
 ````
 
